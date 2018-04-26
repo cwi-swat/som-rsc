@@ -7,13 +7,15 @@ start syntax Program = Classdef*;
 
 syntax Classdef  = Id "=" Id? "(" Locals? Method* ClassDecls? ")"; 
 
-syntax ClassDecls = "----" Locals? Method*;    
-    
+syntax ClassDecls = Sep Locals? Method*;    
+
+lexical Sep = "----"[\-]* !>> [\-];    
+
 syntax Locals = "|" Id* "|"; 
     
 syntax Method 
   = Pattern "=" "primitive" 
-  | Pattern "=" "(" BlockContents ")"
+  | Pattern "=" "(" BlockContents? ")"
   ;
     
 syntax Pattern 
@@ -39,7 +41,7 @@ syntax Primary
   = Id 
   | @category="Constant" Literal
   | bracket "(" Expression ")" 
-  | "[" BlockPattern? BlockContents "]" 
+  | "[" BlockPattern? BlockContents? "]" 
   ;
 
 syntax Messages 
@@ -61,14 +63,15 @@ syntax Literal
   = Symbol
   | @category="StringLiteral" String
   | Number
+  | Float
   ;
+
+syntax Float = "-"? [0-9]+ "." [0-9]+ !>> [0-9];
 
 syntax Number 
-  = "-" Integer 
-  | Integer
-  ;
-
-lexical Integer = [1-9][0-9]* !>> [0-9];  
+  = "-"? [1-9][0-9]* !>> [0-9]
+  | [0]
+  ; 
 
 syntax Symbol 
   = "#" String
@@ -83,13 +86,13 @@ syntax Selector
 
 syntax UnarySelector = Id;
 
-lexical BinarySelector = [|,\-=!&*/\\+\>\<@%] !<< [|,\-=!&*/\\+\>\<@%]+ !>> [|,\-=!&*/\\+\>\<@%]; 
+lexical BinarySelector = [~|,\-=!&*/\\+\>\<@%] !<< [~|,\-=!&*/\\+\>\<@%]+ !>> [~|,\-=!&*/\\+\>\<@%]; 
   
 lexical Keyword = @category="Identifier" Id ":";
 
 syntax KeywordSelector = Keyword+;  
   
-lexical String = "\'" StrChar "\'";
+lexical String = "\'" StrChar* "\'";
 
 lexical StrChar
   = ![\'] // escaping?
