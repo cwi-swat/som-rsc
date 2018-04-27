@@ -95,12 +95,16 @@ syntax Selector
 
 syntax UnarySelector = Id;
 
-// max length is three because of separator
 lexical BinarySelector 
-  = [~|,\-=!&*/\\+\>\<@%] !<< BC  !>> [~|,\-=!&*/\\+\>\<@%]
+  = [~|,\-=!&*/\\+\>\<@%] !<< BC !>> [~|,\-=!&*/\\+\>\<@%]
   | [~|,\-=!&*/\\+\>\<@%] !<< BC BC !>> [~|,\-=!&*/\\+\>\<@%]
   | [~|,\-=!&*/\\+\>\<@%] !<< BC BC BC !>> [~|,\-=!&*/\\+\>\<@%]
+  | [~|,\-=!&*/\\+\>\<@%] !<< FourBC \ Separator BC* !>> [~|,\-=!&*/\\+\>\<@%]
   ;
+
+lexical FourBC = BC BC BC BC;
+  
+keyword Separator = "----";
   
 lexical BC = [~|,\-=!&*/\\+\>\<@%]; 
   
