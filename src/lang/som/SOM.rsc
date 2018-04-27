@@ -9,7 +9,10 @@ syntax Classdef  = Id "=" Id? "(" Locals? Method* ClassDecls? ")";
 
 syntax ClassDecls = Sep Locals? Method*;    
 
-lexical Sep = "----"[\-]* !>> [\-];    
+// TODO Sep is ambiguous with binary selector
+// so a unary class method can be interpreted as
+// a binary method where the separator is the binop
+lexical Sep = [\-] !<< "----"[\-]* !>> [\-] ;    
 
 syntax Locals = "|" Id* "|"; 
     
@@ -26,7 +29,13 @@ syntax Pattern
   
 syntax KeywordArg = Keyword Id;    
   
-syntax BlockContents = Locals? {Stmt "."}+ "."?;
+syntax BlockContents = Locals? {Stmt Dot}+ Dot?;
+    
+lexical Dot
+  = [0-9] << "." !>> [0-9]
+  | [0-9] !<< "." >> [0-9]
+  | [0-9] !<< "." !>> [0-9]
+  ;
     
 syntax Stmt
   = Expression
@@ -66,9 +75,9 @@ syntax Literal
   | Float
   ;
 
-syntax Float = "-"? [0-9]+ "." [0-9]+ !>> [0-9];
+lexical Float = "-"? [0-9]+ "." [0-9]+ !>> [0-9];
 
-syntax Number 
+lexical Number 
   = "-"? [1-9][0-9]* !>> [0-9]
   | [0]
   ; 
@@ -86,7 +95,14 @@ syntax Selector
 
 syntax UnarySelector = Id;
 
-lexical BinarySelector = [~|,\-=!&*/\\+\>\<@%] !<< [~|,\-=!&*/\\+\>\<@%]+ !>> [~|,\-=!&*/\\+\>\<@%]; 
+// max length is three because of separator
+lexical BinarySelector 
+  = [~|,\-=!&*/\\+\>\<@%] !<< BC  !>> [~|,\-=!&*/\\+\>\<@%]
+  | [~|,\-=!&*/\\+\>\<@%] !<< BC BC !>> [~|,\-=!&*/\\+\>\<@%]
+  | [~|,\-=!&*/\\+\>\<@%] !<< BC BC BC !>> [~|,\-=!&*/\\+\>\<@%]
+  ;
+  
+lexical BC = [~|,\-=!&*/\\+\>\<@%]; 
   
 lexical Keyword = @category="Identifier" Id ":";
 
