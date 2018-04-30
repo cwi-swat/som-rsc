@@ -9,9 +9,6 @@ syntax Classdef  = Id "=" Id? "(" Locals? Method* ClassDecls? ")";
 
 syntax ClassDecls = Sep Locals? Method*;    
 
-// TODO Sep is ambiguous with binary selector
-// so a unary class method can be interpreted as
-// a binary method where the separator is the binop
 lexical Sep = [\-] !<< "----"[\-]* !>> [\-] ;    
 
 syntax Locals = "|" Id* "|"; 
