@@ -3,9 +3,11 @@ module lang::som::SOM
 extend lang::std::Whitespace;
 extend lang::std::Id;
 
-start syntax Program = Classdef*;
+start syntax Program = Classdef* defs;
 
-syntax Classdef  = Id "=" Id? "(" Locals? Method* ClassDecls? ")"; 
+syntax Classdef  = Id name "=" Id? "(" ClassBody body ")"; 
+
+syntax ClassBody = Locals? Method* ClassDecls?;
 
 syntax ClassDecls = Sep Locals? Method*;    
 
@@ -39,42 +41,25 @@ syntax Stmt
   | "^" Expression
   ;
     
-syntax Expression = Assignment* Primary Messages?;
-
-syntax Assignment = Id ":=";
-
-syntax Primary 
-  = Id 
-  | @category="Constant" Literal
+syntax Expression 
+  = @category="Variable" Id 
+  | @category="Constant" Symbol
+  | @category="StringLiteral" String
+  | @category="Constant" Integer
+  | @category="Constant" Double
+  | "[" BlockPattern? BlockContents? "]"
+  | Expression!kw UnarySelector
+  > left Expression!kw BinarySelector Expression!kw
+  > kw: Expression!kw KeywordForm+
+  > Id ":=" Expression  
   | bracket "(" Expression ")" 
-  | "[" BlockPattern? BlockContents? "]" 
-  ;
-
-syntax Messages 
-  = UnaryMessage+ BinaryMessage* KeywordMessage?
-  | BinaryMessage+ KeywordMessage?
-  | KeywordMessage
   ;
   
-syntax UnaryMessage = UnarySelector;
-syntax BinaryMessage = BinarySelector BinaryOperand;
-syntax BinaryOperand = Primary UnaryMessage*;
-syntax KeywordMessage = KeywordForm+;
+syntax KeywordForm = Keyword Expression!kw;
+ 
+lexical Double = "-"? [0-9]+ "." [0-9]+ !>> [0-9];
 
-syntax KeywordForm = Keyword Formula;
-
-syntax Formula = BinaryOperand BinaryMessage*;
-
-syntax Literal 
-  = Symbol
-  | @category="StringLiteral" String
-  | Number
-  | Float
-  ;
-
-lexical Float = "-"? [0-9]+ "." [0-9]+ !>> [0-9];
-
-lexical Number 
+lexical Integer 
   = "-"? [1-9][0-9]* !>> [0-9]
   | [0]
   ; 
