@@ -7,9 +7,11 @@ import IO;
 
 void runAll() {
   root = |project://rascal-som/src/lang/som/examples/benchmarks|;
-  for(loc l <- files(root), l.extension == "som") {
+  stdlib = |project://rascal-som/src/lang/som/stdlib|;
+  for(loc l <- files(root) + files(stdlib), l.extension == "som") {
     try {
       parse(#start[Program], l);
+      println("Success <l>");
     }
     catch p:ParseError(_): {
       println(p);    

@@ -3,21 +3,21 @@ module lang::som::SOM
 extend lang::std::Whitespace;
 extend lang::std::Id;
 
-start syntax Program = Classdef* defs;
+start syntax Program = ClassDef* defs;
 
-syntax Classdef  = Id name "=" Id? "(" ClassBody body ")"; 
+syntax ClassDef  = Id name "=" Id? "(" ClassBody body ")"; 
 
-syntax ClassBody = Locals? Method* ClassDecls?;
+syntax ClassBody = Locals? Method* methods ClassDecls?;
 
-syntax ClassDecls = Sep Locals? Method*;    
+syntax ClassDecls = Sep Locals? Method* methods;    
 
 lexical Sep = [\-] !<< "----"[\-]* !>> [\-] ;    
 
 syntax Locals = "|" Id* "|"; 
     
 syntax Method 
-  = Pattern "=" "primitive" 
-  | Pattern "=" "(" BlockContents? ")"
+  = Pattern pattern "=" "primitive" 
+  | Pattern pattern "=" "(" BlockContents? contents ")"
   ;
     
 syntax Pattern 
@@ -37,25 +37,28 @@ lexical Dot
   ;
     
 syntax Stmt
-  = Expression
-  | "^" Expression
+  = Expr
+  | "^" Expr
   ;
+
     
-syntax Expression 
-  = @category="Variable" Id 
+syntax Expr 
+  = Id
   | @category="Constant" Symbol
   | @category="StringLiteral" String
   | @category="Constant" Integer
   | @category="Constant" Double
   | "[" BlockPattern? BlockContents? "]"
-  | Expression!kw UnarySelector
-  > left Expression!kw BinarySelector Expression!kw
-  > kw: Expression!kw KeywordForm+
-  > Id ":=" Expression  
-  | bracket "(" Expression ")" 
+  | Expr!kw UnarySelector
+  > left Expr!kw BinarySelector Expr!kw
+  > kw: Expr!kw KeywordForms
+  > Id ":=" Expr  
+  | bracket "(" Expr ")" 
   ;
+
+syntax KeywordForms = KeywordForm+;
   
-syntax KeywordForm = Keyword Expression!kw;
+syntax KeywordForm = Keyword key Expr!kw expr;
  
 lexical Double = "-"? [0-9]+ "." [0-9]+ !>> [0-9];
 
@@ -75,7 +78,7 @@ syntax Selector
   | UnarySelector
   ;
 
-syntax UnarySelector = Id;
+syntax UnarySelector = @category="Identifier" Id;
 
 lexical BinarySelector 
   = [~|,\-=!&*/\\+\>\<@%] !<< BC !>> [~|,\-=!&*/\\+\>\<@%]
@@ -96,9 +99,7 @@ syntax KeywordSelector = Keyword+;
   
 lexical String = "\'" StrChar* "\'";
 
-lexical StrChar
-  = ![\'] // escaping?
-  ;
+lexical StrChar = ![\']; // escaping?
 
 syntax BlockPattern = BlockArgument+ "|";
 
@@ -112,6 +113,5 @@ lexical WhitespaceOrComment
   | Comment
   ; 
   
-lexical Comment 
-  = @category="Comment" [\"] ![\"]* [\"];
+lexical Comment = @category="Comment" [\"] ![\"]* [\"];
 
