@@ -132,7 +132,7 @@ Ref dispatchVia(Obj class, Selector selector, Ref recv, list[Ref] args, Ctx ctx)
 
   if (just(<Method m, Id found>) := lookup(class, obj is class, selector, ctx)) {
     //println("Found <selector> in <found>");
-    println("Calling <selector> on <obj2str(obj)>");
+    //println("Calling <selector> on <obj2str(obj)>");
 
     if (m has contents) {
       Env env = class.env; // start with the class-level captured environment.

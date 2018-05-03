@@ -48,7 +48,7 @@ syntax Expr
   | @category="StringLiteral" String
   | @category="Constant" Integer
   | @category="Constant" Double
-  | "[" BlockPattern? BlockContents? "]"
+  | "[" BlockPattern? BlockContents? contents "]"
   | Expr!kw UnarySelector
   > left Expr!kw BinarySelector Expr!kw
   > kw: Expr!kw KeywordForms

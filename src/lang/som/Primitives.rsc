@@ -5,6 +5,7 @@ import lang::som::SOM;
 import lang::som::Eval;
 import String;
 import IO;
+import List;
 
 
 Ref notImplemented(Id class, Selector s, Ctx ctx)
@@ -123,39 +124,31 @@ Ref eval((Id)`Object`, (Selector)`instVarNamed:`, Ref self, [Ref sym], Ctx ctx)
 
 // Block1
 
-Ref eval((Id)`Block1`, (Selector)`value`, Ref self, [], Ctx ctx) { 
+Ref blockValue(Ref self, list[Id] xs, list[Ref] args, Ctx ctx) {
   Obj b = ctx.heap.deref(self);
-  if (block(_, Env env, K hat, (Expr)`[<BlockContents? c>]`) := b) {
-    Ref restart() {
-      return  eval(c, ctx[hat=hat][env=env]);
-    }
-    b.restart = restart;
-    ctx.heap.put(self, b);
-    return restart();
-  }
-  fail;
-}    
+  Env env = b.env + ( xs[i]: args[i] | int i <- [0..size(xs)] );
+  Ref run() = eval(b.block.contents, ctx[hat=b.hat][env=env]);
+  b.restart = run;
+  ctx.heap.put(self, b);
+  return run();
+} 
+
+Ref eval((Id)`Block1`, (Selector)`value`, Ref self, [], Ctx ctx) 
+  = blockValue(self, [], [], ctx)
+  when
+    block(_, Env env, K hat, (Expr)`[<BlockContents? c>]`) := ctx.heap.deref(self);  
 
 // Block2
 
-Ref eval((Id)`Block2`, (Selector)`value:`, Ref self, [Ref argument], Ctx ctx) {
-  Obj b = ctx.heap.deref(self);
-  if (block(_, Env env, K hat, (Expr)`[ :<Id x> | <BlockContents? c>]`) := b) {
-    Ref restart() {
-      return  eval(c, ctx[hat=hat][env=env + (x: argument)]);
-    }
-    b.restart = restart;
-    ctx.heap.put(self, b);
-    return restart();
-  }
- fail;
-}    
-
+Ref eval((Id)`Block2`, (Selector)`value:`, Ref self, [Ref argument], Ctx ctx) 
+  = blockValue(self, [x], [argument], ctx)
+  when
+    block(_, Env env, K hat, (Expr)`[ :<Id x> | <BlockContents? c>]`) := ctx.heap.deref(self);
 
 // Block3
 
 Ref eval((Id)`Block3`, (Selector)`value:with:`, Ref self, [Ref arg1, Ref arg2], Ctx ctx) 
-= eval(c, ctx[hat=hat][env=env + (x: arg1,  y: arg2)])
+= blockValue(self, [x, y], [arg1, arg2], ctx)
   when
     block(_, Env env, K hat, (Expr)`[ :<Id x> :<Id y> | <BlockContents? c>]`) := ctx.heap.deref(self);
 
@@ -265,7 +258,9 @@ Ref eval((Id)`Integer`, (Selector)`\<`, Ref self, [Ref argument], Ctx ctx)
     primitive(_, int y) := ctx.heap.deref(argument);
 
 Ref eval((Id)`Integer`, (Selector)`asString`, Ref self, [], Ctx ctx) 
-  = notImplemented((Id)`Integer`, (Selector)`asString`, ctx);
+  = ctx.next(ctx.heap.alloc(primitive(ctx.env[(Id)`String`], "<x>")))
+  when
+    primitive(_, int x) := ctx.heap.deref(self);
 
 Ref eval((Id)`Integer`, (Selector)`as32BitSignedValue`, Ref self, [], Ctx ctx) 
   = notImplemented((Id)`Integer`, (Selector)`as32BitSignedValue`, ctx);
