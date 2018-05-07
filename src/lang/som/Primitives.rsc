@@ -159,7 +159,7 @@ Ref eval((Id)`Class`, (Selector)`new`, Ref self, [], Ctx ctx) {
   Obj class = ctx.heap.deref(self);
   Env fields = ();
   if ((ClassBody)`|<Id* xs>| <Method* _> <ClassDecls? _>` := class.body) {
-    fields = ( x: ctx.env[NIL] | Id x <- xs );
+    fields = ( x: ctx.heap.alloc(ctx.heap.deref(ctx.env[NIL])) | Id x <- xs );
   }
   return ctx.next(ctx.heap.alloc(object(self, fields)));
 } 

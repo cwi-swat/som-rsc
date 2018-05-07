@@ -11,13 +11,13 @@ import IO;
 import List;
 import util::Maybe;
 
-Ref identityK(Ref v) = v;
 
 /*
  * Top-level
  */
 
 str eval(Expr e) {
+  Ref identityK(Ref v) = v;
   <heap, env> = boot();
   Ref result = eval(e, <heap, env, identityK, identityK>);
   Obj obj = heap.deref(result);
@@ -32,18 +32,13 @@ str eval(Expr e) {
 Ref eval(BlockContents? b, Ctx ctx) 
   = size(b.args) > 0 ? eval(b.args[0], ctx) : ctx.next(ctx.env[NIL]);
  
-Ref eval((BlockContents)`|<Id* xs>| <{Stmt Dot}+ stms> <Dot? _>`, Ctx ctx) {
-  for (Id x <- xs) {
-    ctx.env[x] = ctx.env[NIL];
-  }
-  return eval((BlockContents)`<{Stmt Dot}+ stms>`, ctx);
-} 
+Ref eval((BlockContents)`|<Id* xs>| <{Stmt Dot}+ stms> <Dot? _>`, Ctx ctx) 
+  = eval((BlockContents)`<{Stmt Dot}+ stms>`, ctx[env=ctx.env + ( x : ctx.heap.alloc(ctx.heap.deref(ctx.env[NIL])) | x <- xs )]);
 
 Ref eval((BlockContents)`<Stmt s>. <{Stmt Dot}+ ss> <Dot? _>`, Ctx ctx) 
   = eval(s, ctx[next=Ref(Ref v) { return eval((BlockContents)`<{Stmt Dot}+ ss>`, ctx); }]);
 
-Ref eval((BlockContents)`<Stmt s> <Dot? _>`, Ctx ctx) 
-  = eval(s, ctx); 
+Ref eval((BlockContents)`<Stmt s> <Dot? _>`, Ctx ctx) = eval(s, ctx); 
 
 Ref eval((Stmt)`<Expr e>`, Ctx ctx) = eval(e, ctx);
 
@@ -162,9 +157,7 @@ Ref doesNotUnderstand(Selector selector, Ref recv, list[Ref] args, Ctx ctx) {
 
 
 Maybe[tuple[Method, Id]] lookup(Obj class, bool isClass, Selector selector, Ctx ctx) {
-  //println("Lookup in <obj2str(class)> (isClass = <isClass>) of <selector>");
   if (Method m <- methods(class.body, isClass), match(m.pattern, selector)) {
-    //println("Matched <m.pattern> to <selector>");
     return just(<m, class.name>);
   }
   
